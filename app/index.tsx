@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useState } from "react";
+import { Children, useState } from "react";
 import {
   Pressable,
   Text,
@@ -7,10 +7,20 @@ import {
   FlatList,
   View,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import NewTaskInput from "@/components/NewTaskInput";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const dummytask = [
+export type Task = {
+  title: string;
+  isFinished: boolean;
+};
+
+const dummytask: Task[] = [
   {
     title: "Some task 1",
     isFinished: true,
@@ -34,8 +44,7 @@ const dummytask = [
 ];
 
 export default function HomeScreen() {
-  const [tasks, setTasks] = useState(dummytask);
-  const [newTask, setNewTask] = useState('');
+  const [tasks, setTasks] = useState<Task[]>(dummytask);
 
   const onItemPressed = (index: number) => {
     setTasks((currentTasks) => {
@@ -44,84 +53,76 @@ export default function HomeScreen() {
       return updatedTasks;
     });
   };
+
   return (
-    <View style={styles.page}>
-      <FlatList
-        data={tasks}
-        contentContainerStyle={{ gap: 5 }}
-        renderItem={({ item, index }) => (
-          <Pressable
-            onPress={() => onItemPressed(index)}
-            style={styles.taskContainer}
-          >
-            <MaterialIcons
-              name={item.isFinished ? "check-box" : "check-box-outline-blank"}
-              size={24}
-              color="dimgray"
-            />
-            {/* <MaterialIcons name="check-box" size={24} color="black" /> */}
-            <Text
-              style={[
-                styles.taskTitle,
-                {
-                  textDecorationLine: item.isFinished ? "line-through" : "none",
-                },
-              ]}
-            >
-              {item.title}
-            </Text>
-          </Pressable>
-        )}
-        ListFooterComponent={() => (
-          <View style={styles.taskContainer}>
-            <MaterialIcons
-              name="check-box-outline-blank"
-              size={24}
-              color="gray"
-            />
-            <TextInput
-              autoFocus
-              value={newTask}
-              onChangeText={setNewTask}
-              style={styles.input}
-              placeholder="Add Todo..."
-              onEndEditing={() => {
-                setTasks((currentTasks) => [
-                  ...currentTasks,
-                  {title: newTask, isFinished: false}
-                ]);
-              }}
+    <KeyboardAvoidingView
+      behavior={"height"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={30}
+    >
+      <SafeAreaView style={styles.page}>
+        <ScrollView>
+          <View>
+            <FlatList
+              data={tasks}
+              scrollEnabled={false}
+              contentContainerStyle={{ gap: 5, padding: 20, }}
+              renderItem={({ item, index }) => (
+                <Pressable
+                  onPress={() => onItemPressed(index)}
+                  style={styles.taskContainer}
+                >
+                  <MaterialIcons
+                    name={
+                      item.isFinished ? "check-box" : "check-box-outline-blank"
+                    }
+                    size={24}
+                    color="dimgray"
+                  />
+                  {/* <MaterialIcons name="check-box" size={24} color="black" /> */}
+                  <Text
+                    style={[
+                      styles.taskTitle,
+                      {
+                        textDecorationLine: item.isFinished
+                          ? "line-through"
+                          : "none",
+                      },
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                </Pressable>
+              )}
+              ListFooterComponent={() => (
+                <NewTaskInput
+                  onAdd={(newTodo: Task) =>
+                    setTasks((currentTask) => [...currentTask, newTodo])
+                  }
+                />
+              )}
             />
           </View>
-        )}
-      />
-    </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
-    padding: 20,
-    backgroundColor: "white",
     flex: 1,
+    backgroundColor: "white",
   },
   taskContainer: {
     padding: 5,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    // borderWidth: 1,
-    // borderColor: 'gray',
   },
   taskTitle: {
     fontFamily: "Inter",
     fontWeight: "600",
     color: "dimgray",
-  },
-  input: {
-    fontFamily: "Inter",
-    fontWeight: "600",
-    color: "dimgray",
-    flex: 1,
   },
 });
